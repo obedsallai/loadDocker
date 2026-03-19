@@ -2,53 +2,39 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 
-const app = express();
-const PORT = process.env.PORT || 3000;
+const { Sequelize } = require('sequelize');
+const sequelize = require('./models').sequelize;
+const Todo = require('./models').Todo;
 
+const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Fake DB (en mémoire)
-let todos = [
-  { id: 1, title: "Apprendre Docker", done: false },
-];
-
 // Routes
-app.get('/', (req, res) => {
-  res.json({ message: "API is running 🚀" });
-});
-
-app.get('/todos', (req, res) => {
+app.get('/todos', async (req, res) => {
+  const todos = await Todo.findAll();
   res.json(todos);
 });
 
-app.post('/todos', (req, res) => {
-  const newTodo = {
-    id: todos.length + 1,
-    title: req.body.title,
-    done: false,
-  };
-  todos.push(newTodo);
-  res.status(201).json(newTodo);
+app.post('/todos', async (req, res) => {
+  const todo = await Todo.create({ title: req.body.title });
+  res.status(201).json(todo);
 });
 
-app.put('/todos/:id', (req, res) => {
-  const id = parseInt(req.params.id);
-  const todo = todos.find(t => t.id === id);
-
+app.put('/todos/:id', async (req, res) => {
+  const todo = await Todo.findByPk(req.params.id);
   if (!todo) return res.status(404).json({ message: "Not found" });
-
   todo.done = !todo.done;
+  await todo.save();
   res.json(todo);
 });
 
-app.delete('/todos/:id', (req, res) => {
-  const id = parseInt(req.params.id);
-  todos = todos.filter(t => t.id !== id);
+app.delete('/todos/:id', async (req, res) => {
+  const todo = await Todo.findByPk(req.params.id);
+  if (!todo) return res.status(404).json({ message: "Not found" });
+  await todo.destroy();
   res.json({ message: "Deleted" });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
-
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
