@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
+require('config/config');
 
 const { Sequelize } = require('sequelize');
 const sequelize = require('./models').sequelize;
@@ -9,6 +10,7 @@ const Todo = require('./models').Todo;
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({extended : true}));
 
 // Routes
 app.get('/todos', async (req, res) => {
